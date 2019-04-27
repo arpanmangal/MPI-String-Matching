@@ -10,7 +10,7 @@ using namespace std;
 void findWitnessArray (char *pattern, int plen, vector<int> &WitnessArray, int wlen);
 int DUEL (char *Z, int n, const char *Y, int m, vector<int> &WitnessArray, int wlen, int i, int j);
 void TextAnalysis (char *text, int n, char *pattern, int plen, int minPeriod, vector<int> &matches, vector<int> &WitArr);
-int TextAnalysisTest (char *text, int n, char *P, int m, int period);
+void TextAnalysisP (char *text, int n, char *P, int m, int period);
 
 void periodic_pattern_matching (
 		int n, 
@@ -284,7 +284,7 @@ void TextAnalysis (char *text, int n, char *pattern, int plen, int minPeriod, ve
 	}
 }
 
-int TextAnalysisTest (char *text, int n, char *P, int m, int period) {
+void TextAnalysisP (char *text, int n, char *P, int m, int period) {
 	char *P_dash = P;
 	int m_dash = 2*period - 1;
 
@@ -301,8 +301,33 @@ int TextAnalysisTest (char *text, int n, char *P, int m, int period) {
 	char *P_v = P + k*period;
 	int m_v = m - k*period;
 
+	int *M = (int *) malloc (n * sizeof(int));
 	for (int i = 0; i < n; i++) {
-
+		M[i] = 0;
+		for (int j = 0; j < matches.size(); j++) {
+			if (j == i) {
+				int flag = 1;
+				for (int k = i, idx=0; flag && k < period; k++, idx++) {
+					if (text[k] != P[idx]) {
+						flag = 0;
+						break;
+					}
+				}
+				for (int k = i, idx=0; flag && k < period; k++, idx++) {
+					if (text[k] != P[idx]) {
+						flag = 0;
+						break;
+					}
+				}
+				for (int k = i, idx=0; flag && k < m_v; k++, idx++) {
+					if (text[k] != P_v[idx]) {
+						flag = 0;
+						break;
+					}
+				}
+				M[i] = flag;
+				break;
+			}
+		}
 	}
-
 }

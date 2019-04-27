@@ -23,8 +23,8 @@ tt = [
     # os.system('echo ' + t + ' && time mpirun -np 1 ./ppm testcase/testcase_' + t + ' > brute/' + t)
 
 for t in tt:
-    os.system('echo ' + t + ' && time mpirun -np 1 ./ppm testcase/testcase_' + t + ' > seqjaja/' + t)
+    os.system('echo ' + t + ' && time mpirun -np 4 ./ppm testcase/testcase_' + t + ' > jaja/' + t)
 
 for t in tt:
     # print (t)
-    os.system('echo ' + t + ' && time diff brute/' + t + ' seqjaja/' + t + ' > diffs/' + t)
+    os.system('echo ' + t + ' && time diff brute/' + t + ' jaja/' + t + ' > diffs/' + t)

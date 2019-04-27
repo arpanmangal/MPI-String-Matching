@@ -10,6 +10,7 @@ using namespace std;
 void findWitnessArray (char *pattern, int plen, vector<int> &WitnessArray, int wlen);
 int DUEL (char *Z, int n, const char *Y, int m, vector<int> &WitnessArray, int wlen, int i, int j);
 void TextAnalysis (char *text, int n, char *pattern, int plen, int minPeriod, vector<int> &matches, vector<int> &WitArr);
+int TextAnalysisTest (char *text, int n, char *P, int m, int period);
 
 void periodic_pattern_matching (
 		int n, 
@@ -21,7 +22,7 @@ void periodic_pattern_matching (
 		int **match_counts, 
 		int **matches)
 {
-	int codeToRun = 1;
+	int codeToRun = 2;
 
 	if (codeToRun == 0) {
 		// Run Sequential Code for comparing output
@@ -75,17 +76,118 @@ void periodic_pattern_matching (
 
 			TextAnalysis (text, n, pattern, plen, minPeriod, string_matches[p], WitnessArrays[p]);
 			total_matches += string_matches[p].size();
+		}
+		*matches = (int *) malloc(total_matches * sizeof(int));
+		*match_counts = (int *) malloc(num_patterns * sizeof(int));
 
-			*matches = (int *) malloc(total_matches * sizeof(int));
-			*match_counts = (int *) malloc(num_patterns * sizeof(int));
-			int m = 0;
-			for (int p = 0; p < num_patterns; p++) {
-				(*match_counts)[p] = string_matches[p].size();
-				for (int i = 0; i < string_matches[p].size(); i++) {
-					(*matches)[m++] = string_matches[p][i];
-				}
+		int m = 0;
+		for (int p = 0; p < num_patterns; p++) {
+			(*match_counts)[p] = string_matches[p].size();
+			for (int i = 0; i < string_matches[p].size(); i++) {
+				(*matches)[m++] = string_matches[p][i];
 			}
 		}
+
+		for (int i = 0; i < num_patterns; i++) {
+			cout << (*match_counts)[i] << " ";
+		}
+		cout << endl;
+	}
+
+	if (codeToRun == 2) {
+		// Parallel jaja
+		vector<vector<int>> WitnessArrays (num_patterns);
+		vector<vector<int>> string_matches (num_patterns);
+		// int total_matches = 0;
+
+		int rank, size;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+		int num_assigned;
+		int *my_match_counts;
+		int my_total;
+		int *my_matches;
+
+		// cout << num_patterns << " " << size << " " << rank << endl;
+		int start = rank * (num_patterns / size);
+		int end = min((rank + 1) * (num_patterns / size), num_patterns); // Actually end - 1
+		num_assigned = end - start;
+
+		for (int p = 0, gp = start; p < num_assigned; p++, gp++) {
+			char *pattern = pattern_set[gp];
+			int plen = m_set[gp];
+			int period = p_set[gp];
+			int mBY2 = (plen+1) / 2;
+			int minPeriod = min(period, mBY2);
+
+			findWitnessArray (pattern, plen, WitnessArrays[p], minPeriod);
+
+			TextAnalysis (text, n, pattern, plen, minPeriod, string_matches[p], WitnessArrays[p]);
+			my_total += string_matches[p].size();
+
+			my_match_counts = (int *) malloc (num_assigned * sizeof(int));
+			my_matches = (int *) malloc (my_total * sizeof(int));
+		}
+
+		int m = 0;
+		for (int p = 0; p < num_assigned; p++) {
+			my_match_counts[p] = string_matches[p].size();
+			for (int i = 0; i < string_matches[p].size(); i++) {
+				my_matches[m++] = string_matches[p][i];
+			}
+		}
+
+		const int root = 0;
+		/** Gathering the match_counts **/
+		int *mc_recv_counts = NULL;
+
+		if (rank == root)
+			mc_recv_counts = (int *) malloc (size * sizeof(int));
+
+		// cout << rank << " " << num_assigned << endl;
+		MPI_Gather (&num_assigned, 1, MPI_INT,
+					mc_recv_counts, 1, MPI_INT,
+					root, MPI_COMM_WORLD);
+
+		// Compute displs and gather match_counts
+		int totalGather = 0;
+		int *displs = NULL;
+
+		if (rank == root) {
+			displs = (int*) malloc (size*sizeof(int));
+
+			displs[0] = 0;
+			totalGather += mc_recv_counts[0];
+
+			for (int i = 1; i < size; i++) {
+				totalGather += mc_recv_counts[i];
+				displs[i] = displs[i-1]+mc_recv_counts[i-1];
+			}
+
+			*match_counts = (int *) malloc (totalGather * sizeof(int));
+
+			// cout << totalGather << endl;
+			// for (int i = 0; i < size; i++) {
+			// 	cout << displs[i] << " ";
+			// }
+			// cout << endl;
+		}
+
+		MPI_Gatherv (my_match_counts, num_assigned, MPI_INT,
+					*match_counts, mc_recv_counts, displs, MPI_INT,
+					root, MPI_COMM_WORLD);
+
+		if (rank == root) {
+			for (int i = 0; i < num_patterns; i++) {
+				cout << (*match_counts)[i] << " ";
+			}
+			cout << endl;
+		}
+		
+		/** Gathering the matches **/
+
+
 	}
 }
 
@@ -140,7 +242,7 @@ void TextAnalysis (char *text, int n, char *pattern, int plen, int minPeriod, ve
 	}
 }
 
-int P_TextAnalysis (char *text, int n, char *P, int m, int period) {
+int TextAnalysisTest (char *text, int n, char *P, int m, int period) {
 	char *P_dash = P;
 	int m_dash = 2*period - 1;
 

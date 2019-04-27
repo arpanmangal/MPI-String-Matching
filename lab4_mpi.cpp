@@ -178,14 +178,56 @@ void periodic_pattern_matching (
 					*match_counts, mc_recv_counts, displs, MPI_INT,
 					root, MPI_COMM_WORLD);
 
-		if (rank == root) {
-			for (int i = 0; i < num_patterns; i++) {
-				cout << (*match_counts)[i] << " ";
-			}
-			cout << endl;
-		}
+		// if (rank == root) {
+		// 	for (int i = 0; i < num_patterns; i++) {
+		// 		cout << (*match_counts)[i] << " ";
+		// 	}
+		// 	cout << endl;
+		// }
 		
+		MPI_Barrier(MPI_COMM_WORLD);
+
 		/** Gathering the matches **/
+		int *m_recv_counts = NULL;
+
+		if (rank == root)
+			m_recv_counts = (int *) malloc (size * sizeof(int));
+
+		// cout << rank << " " << my_total << endl;
+		num_assigned = my_total;
+		MPI_Gather (&num_assigned, 1, MPI_INT,
+					m_recv_counts, 1, MPI_INT,
+					root, MPI_COMM_WORLD);
+
+		// // Compute displs and gather match_counts
+		int mTotalGather = 0;
+		int *mDispls = NULL;
+
+		if (rank == root) {
+			mDispls = (int*) malloc (size*sizeof(int));
+
+			mDispls[0] = 0;
+			mTotalGather += m_recv_counts[0];
+
+			for (int i = 1; i < size; i++) {
+				mTotalGather += m_recv_counts[i];
+				mDispls[i] = mDispls[i-1]+m_recv_counts[i-1];
+			}
+
+			*matches = (int *) malloc (mTotalGather * sizeof(int));
+
+			// cout << mTotalGather << endl;
+			// for (int i = 0; i < size; i++) {
+			// 	cout << mDispls[i] << " ";
+			// }
+			// cout << endl;
+		}
+
+
+
+		MPI_Gatherv (my_matches, num_assigned, MPI_INT,
+					*matches, m_recv_counts, mDispls, MPI_INT,
+					root, MPI_COMM_WORLD);
 
 
 	}

@@ -110,21 +110,32 @@ int DUEL (char *Z, int n, char *Y, int m, vector<int> &WitnessArray, int wlen, i
 
 void TextAnalysis (char *text, int n, char *pattern, int plen, int minPeriod, vector<int> &matches, vector<int> &WitArr) {
 	// Partition into blocks
+	vector<int> pmatches;
 	for (int b = 0; b < n / minPeriod; b++) {
 		int i = b * minPeriod;
-		for (int j = i+1; j < (b+1)*minPeriod; j++) {
-			i = DUEL (text, n, pattern, plen, WitArr, WitArr.size(), i, j);
-		}
 
-		// i is a potential position
-		int j;
-		for (j = 0; i+j < n && j < plen; j++) {
-			if (text[i+j] != pattern[j])
-				break;
-		}
-		if (j == plen) {
-			// Found pattern
-			matches.push_back(i);
+		for (int ip = i; ip < (b+1)*minPeriod; ip++) {
+			int j;
+			for (j = 0; ip+j < n && j < plen; j++) {
+				if (text[ip+j] != pattern[j]) break; }
+			if (j == plen) {
+				matches.push_back(ip); break; }}
+		
+		if (i + plen - 1 >= n) {
+			for (int j = i+1; j < (b+1)*minPeriod; j++) {
+				i = DUEL (text, n, pattern, plen, WitArr, WitArr.size(), i, j);
+			}
+
+			// i is a potential position
+			int j;
+			for (j = 0; i+j < n && j < plen; j++) {
+				if (text[i+j] != pattern[j])
+					break;
+			}
+			if (j == plen) {
+				// Found pattern
+				pmatches.push_back(i);
+			}
 		}
 	}
 }

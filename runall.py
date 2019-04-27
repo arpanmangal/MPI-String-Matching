@@ -15,7 +15,12 @@ tt = [
     # '10000000_1',
     # '10000000_100',
     '10000000_10000',
+    # '1000000_200',
+    # '1000000_1'
 ]
+
+# for t in tt:
+    # os.system('echo ' + t + ' && time mpirun -np 1 ./ppm testcase/testcase_' + t + ' > brute/' + t)
 
 for t in tt:
     os.system('echo ' + t + ' && time mpirun -np 1 ./ppm testcase/testcase_' + t + ' > seqjaja/' + t)

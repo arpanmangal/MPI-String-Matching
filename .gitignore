@@ -2,3 +2,6 @@ a.out
 .vscode/**
 testcase/testcase*
 ppm
+brute/*
+testcase/*
+!*.py

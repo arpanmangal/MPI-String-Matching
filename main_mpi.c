@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 		and outputs the results
 		*/
 		write_result(match_counts, matches, total_time);
+		format_checker (num_patterns, match_counts, matches);
 	}
 
 	MPI_Finalize();

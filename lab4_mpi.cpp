@@ -111,7 +111,7 @@ void periodic_pattern_matching (
 
 		// cout << num_patterns << " " << size << " " << rank << endl;
 		int start = rank * (num_patterns / size);
-		int end = min((rank + 1) * (num_patterns / size), num_patterns); // Actually end - 1
+		int end = max((rank + 1) * (num_patterns / size), num_patterns); // Actually end - 1
 		num_assigned = end - start;
 
 		for (int p = 0, gp = start; p < num_assigned; p++, gp++) {
